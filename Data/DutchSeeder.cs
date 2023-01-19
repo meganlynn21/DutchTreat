@@ -7,7 +7,6 @@ using System.Text.Json;
 using System.Threading.Tasks;
 using DutchTreat.Data.Entities;
 using Microsoft.AspNetCore.Hosting;
-using Microsoft.AspNetCore.Identity;
 
 namespace DutchTreat.Data
 {
@@ -37,17 +36,16 @@ namespace DutchTreat.Data
                 var order = _ctx.Orders.Where(o => o.Id == 1).FirstOrDefault();
                 if (order == null)
                 {
-                    order = new Order();
-                    //order.User = user;
                     order.Items = new List<OrderItem>()
           {
             new OrderItem()
             {
               Product = products.First(),
-              Quantity = 2,
+              Quantity = 5,
               UnitPrice = products.First().Price
             }
           };
+                    _ctx.Orders.Add(order);
                 }
 
                 _ctx.SaveChanges();
