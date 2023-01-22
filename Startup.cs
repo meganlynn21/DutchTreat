@@ -2,17 +2,22 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
+using System.Text;
 using System.Threading.Tasks;
 using AutoMapper;
 using DutchTreat.Data;
+using DutchTreat.Data.Entities;
 using DutchTreat.Services;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
+using Microsoft.IdentityModel.Tokens;
+using Newtonsoft.Json;
 
 namespace DutchTreat
 {
@@ -29,8 +34,30 @@ namespace DutchTreat
         // For more information on how to configure your application, visit https://go.microsoft.com/fwlink/?LinkID=398940
         public void ConfigureServices(IServiceCollection services)
         {
-            services.AddDbContext<DutchContext>();
+            services.AddIdentity<StoreUser, IdentityRole>(cfg =>
+            {
+                cfg.User.RequireUniqueEmail = true;
+            })
+              .AddEntityFrameworkStores<DutchContext>();
 
+            services.AddAuthentication()
+              .AddCookie()
+              .AddJwtBearer(cfg =>
+              {
+                  cfg.TokenValidationParameters = new TokenValidationParameters()
+                  {
+                      ValidateIssuer = true,
+                      ValidateAudience = true,
+                      ValidateLifetime = true,
+                      ValidateIssuerSigningKey = true,
+                      ValidIssuer = _config["Tokens:Issuer"],
+                      ValidAudience = _config["Tokens:Audience"],
+                      IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(_config["Logging:Tokens:Key"]))
+              };
+              });
+            services.AddMvc();
+            services.AddControllers();
+            services.AddDbContext<DutchContext>();
             services.AddTransient<IMailService, NullMailService>();
 
             services.AddTransient<DutchSeeder>();
@@ -41,7 +68,8 @@ namespace DutchTreat
 
             services.AddControllersWithViews()
               .AddRazorRuntimeCompilation()
-              .AddNewtonsoftJson(cfg => cfg.SerializerSettings.ReferenceLoopHandling = Newtonsoft.Json.ReferenceLoopHandling.Ignore);
+              .AddNewtonsoftJson(cfg => cfg.SerializerSettings.ReferenceLoopHandling = ReferenceLoopHandling.Ignore);
+
             services.AddRazorPages();
         }
 
@@ -61,6 +89,9 @@ namespace DutchTreat
             app.UseStaticFiles();
 
             app.UseRouting();
+
+            app.UseAuthentication();
+            app.UseAuthorization();
 
             app.UseEndpoints(cfg =>
             {
