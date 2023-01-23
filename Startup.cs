@@ -46,9 +46,8 @@ namespace DutchTreat
               {
                   cfg.TokenValidationParameters = new TokenValidationParameters()
                   {
-                      ValidateIssuer = true,
-                      ValidateAudience = true,
-                      ValidateLifetime = true,
+                      ValidateIssuer = false,
+                      ValidateAudience = false,
                       ValidateIssuerSigningKey = true,
                       ValidIssuer = _config["Tokens:Issuer"],
                       ValidAudience = _config["Tokens:Audience"],
